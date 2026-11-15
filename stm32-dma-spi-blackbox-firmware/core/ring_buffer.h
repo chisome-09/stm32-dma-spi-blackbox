@@ -19,6 +19,6 @@ typedef struct{
 uint8_t read_flash_buffer(flash_buffer* buffer,Log_Page_t* log_page);
 uint8_t read_imu_buffer(imu_buffer* buffer,IMU_Sample_t* imu_sample);
 
-uint8_t write_flash_buffer(flash_buffer* buffer,Log_Page_t* log_page);
-uint8_t write_imu_buffer(imu_buffer* buffer,IMU_Sample_t* imu_sample);
+uint8_t write_flash_buffer(flash_buffer* buffer,const Log_Page_t* log_page);
+uint8_t write_imu_buffer(imu_buffer* buffer,const IMU_Sample_t* imu_sample);
 #endif /* RING_BUFFER_H_ */

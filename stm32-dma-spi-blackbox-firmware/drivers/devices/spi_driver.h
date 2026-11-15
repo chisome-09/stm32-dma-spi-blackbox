@@ -11,6 +11,7 @@
 #define SPI_DRIVER_H_
 
 #include<stdint.h>
+#include "ring_buffer.h"
 
 
 //frame)format settings
