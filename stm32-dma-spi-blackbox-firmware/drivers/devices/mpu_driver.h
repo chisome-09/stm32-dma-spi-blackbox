@@ -2,7 +2,20 @@
 #ifndef DEVICES_MPU_DRIVER_H_
 #define DEVICES_MPU_DRIVER_H_
 
-uint16_t compute_DC_bias();//Gyro Offset Registers
+
+//MPU Settings Register Map
+typedef enum {
+    MPU_REG_CONFIG        = 0x1A,
+	MPU_REG_GYRO_CONFIG   = 0x1B,
+	MPU_REG_ACCEL_CONFIG  = 0x1C,
+	MPU_REG_ACCEL_CONFIG2 = 0x1D,
+	MPU_REG_LP_ACCEL_ODR  = 0x1E,
+	MPU_REG_WOM_THR       = 0x1F,
+	MPU_REG_FIFO_EN       = 0x23
+} MPU_Reg;
+
+
+uint16_t compute_DC_bias();//Gyroscope Offset Registers
 
 //MPU General Settings
 typedef union {
@@ -55,23 +68,27 @@ typedef union {
 typedef union {
 	uint8_t config;
 	struct __attribute__((packed)){
-		uint8_t lposk_clksel : 4;
+		uint8_t lposc_clksel : 4;
 		uint8_t reserved : 4;
 	}config_settings;
 }Low_Power_Accel;
 
 //Wake On Motion Threshold
-uint8_t wom_threshold;
+extern uint8_t wom_threshold;
 
 //FIFO Enable
-/*typedef union {
+typedef union {
 	uint8_t config;
 	struct __attribute__((packed)){
 		uint8_t slv_0 : 1;
 		uint8_t slv_1: 1;
 		uint8_t slv_2: 1;
-		uint8_t
+		uint8_t accel: 1;
+		uint8_t gyro_zout: 1;
+		uint8_t gyro_yout: 1;
+		uint8_t gyro_xout: 1;
+		uint8_t temp_out: 1;
 	}config_settings;
-}FIFO_ENABLE;*/
+}FIFO_ENABLE;
 
 #endif /* DEVICES_MPU_DRIVER_H_ */
