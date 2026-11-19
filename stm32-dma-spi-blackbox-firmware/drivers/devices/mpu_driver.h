@@ -113,7 +113,25 @@ typedef union{
 		uint8_t i2c_mst_en:1;
 		uint8_t fifo_en: 1;
 		uint8_t dmp_en: 1;
-	}config_settingds;
+	}config_settings;
 }USER_CTRL;
 
+//Accelerometer Interrupt Control
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t reserved : 6;
+		uint8_t accel_intel_mode:1 ;
+		uint8_t accel_intel_en:1;
+	}config_settings;
+}ACCEL_INT_CTRL;
+
+//Power Management 2 Settings
+/*typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t disable_zg;
+
+	}
+};*/
 #endif /* DEVICES_MPU_DRIVER_H_ */
