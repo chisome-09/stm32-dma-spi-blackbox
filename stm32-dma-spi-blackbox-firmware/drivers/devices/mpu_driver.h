@@ -11,9 +11,19 @@ typedef enum {
 	MPU_REG_ACCEL_CONFIG2 = 0x1D,
 	MPU_REG_LP_ACCEL_ODR  = 0x1E,
 	MPU_REG_WOM_THR       = 0x1F,
-	MPU_REG_FIFO_EN       = 0x23
-} MPU_Reg;
+	MPU_REG_FIFO_EN       = 0x23,
+	MPU_USER_CONTROL = 0x6A,
+	WHO_AM_I = 0x75,
+	MPU_PWR_MGMT_2 =0X69,
+	MPU_ACCEL_INTEL_CTRL = 0X6A
+} MPU_General_Reg;
 
+typedef struct{
+	int16_t accel_x_reading;
+	int16_t accel_y_reading;
+	int16_t accel_z_reading;
+
+};
 
 uint16_t compute_DC_bias();//Gyroscope Offset Registers
 
@@ -90,5 +100,20 @@ typedef union {
 		uint8_t temp_out: 1;
 	}config_settings;
 }FIFO_ENABLE;
+
+//User Control
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t sig_cond_rst : 1;
+		uint8_t i2c_mst_rst : 1;
+		uint8_t fifo_rst: 1;
+		uint8_t dmp_rst: 1;
+		uint8_t i2c_if_dis: 1;
+		uint8_t i2c_mst_en:1;
+		uint8_t fifo_en: 1;
+		uint8_t dmp_en: 1;
+	}config_settingds;
+}USER_CTRL;
 
 #endif /* DEVICES_MPU_DRIVER_H_ */
