@@ -1,6 +1,7 @@
 
 #ifndef DEVICES_MPU_DRIVER_H_
 #define DEVICES_MPU_DRIVER_H_
+#include "log_packet.h"
 
 
 //MPU Settings Register Map
@@ -14,18 +15,16 @@ typedef enum {
 	MPU_REG_FIFO_EN       = 0x23,
 	MPU_USER_CONTROL = 0x6A,
 	WHO_AM_I = 0x75,
-	MPU_PWR_MGMT_2 =0X69,
-	MPU_ACCEL_INTEL_CTRL = 0X6A
+	MPU_PWR_MGMT_2 =0X6C,
+	MPU_ACCEL_INTEL_CTRL = 0X69,
+	MPU_SMPLRT_DIV = 0x19,
+	MPU_PWR_MGMT_1 =0x6B,
+	MPU_INT_PIN_CFG = 0X37,
+	MPU_INT_ENABLE = 0x38,
+	MPU_INT_STATUS = 0x3A,
+	MPU_ACCEL_XOUT_H = 0x3B
 } MPU_General_Reg;
 
-typedef struct{
-	int16_t accel_x_reading;
-	int16_t accel_y_reading;
-	int16_t accel_z_reading;
-
-};
-
-uint16_t compute_DC_bias();//Gyroscope Offset Registers
 
 //MPU General Settings
 typedef union {
@@ -126,12 +125,83 @@ typedef union{
 	}config_settings;
 }ACCEL_INT_CTRL;
 
-//Power Management 2 Settings
-/*typedef union{
+//Power Management 1 Settings
+typedef union{
 	uint8_t config;
 	struct __attribute__((packed)){
-		uint8_t disable_zg;
+		uint8_t clksel : 3;
+		uint8_t tempdis: 1;
+		uint8_t gyro_standby:1;
+		uint8_t cycle: 1;
+		uint8_t sleep:1;
+		uint8_t device_reset: 1;
+	}config_settings;
+}PWR_MGMT_1;
 
-	}
-};*/
+//Power Management 2 Settings
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t disable_zg:1;
+		uint8_t disable_yg: 1;
+		uint8_t disable_xg: 1;
+		uint8_t disable_za: 1;
+		uint8_t disable_ya:1;
+		uint8_t disable_xa:1;
+		uint8_t lp_wake_ctrl:2;
+	}config_settings;
+}PWR_MGMT_2;
+
+//Interrupt Pin Configuration
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t reserved:1;
+		uint8_t bypass_en: 1;
+		uint8_t fsync_int_mode_en: 1;
+		uint8_t actl_fsync: 1;
+		uint8_t int_anyrd_2clear:1;
+		uint8_t latch_int_en:1;
+		uint8_t open:1;
+		uint8_t actl:1;
+	}config_settings;
+}INT_PIN_Typedef;
+
+//Interrupt Enable
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t raw_rdy_en:1;
+		uint8_t reserved: 2;
+		uint8_t fsync_int_en: 1;
+		uint8_t fifo_overflow_en: 1;
+		uint8_t reserved_2:1;
+		uint8_t wom_en:1;
+		uint8_t reserved_3:1;
+	}config_settings;
+}INT_EN_TypeDef;
+
+//Interrupt Status
+typedef union{
+	uint8_t config;
+	struct __attribute__((packed)){
+		uint8_t raw_data_rdy_int:1;
+		uint8_t dmp_int:1;
+		uint8_t reserved:1;
+		uint8_t fsync_int:1;
+		uint8_t fifo_overflow_int:1;
+		uint8_t reserved_2:1;
+		uint8_t wom_int:1;
+		uint8_t reserved_3:1;
+	}config_settings;
+}INT_STATUS_TypeDef;
+
+
+//Driver Functions
+uint16_t compute_DC_bias(void);//Gyroscope Offset Registers
+uint8_t mpu_config(void);
+uint8_t mpu_wom_mode(void);
+uint8_t mpu_read(IMU_Sample_t* imu_sample);
+uint8_t mpu_signal_reset(void);
+uint8_t mpu_reset(void);
 #endif /* DEVICES_MPU_DRIVER_H_ */
