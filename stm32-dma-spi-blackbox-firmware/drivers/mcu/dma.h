@@ -1,11 +1,18 @@
 #ifndef MCU_DMA_H_
 #define MCU_DMA_H_
 #define STM32F411xE
+#define NULL ((void *)0)
 #include "stm32f411xe.h"
 #include "stm32f4xx.h"
 #include <stdint.h>
 
+//ENABLE/DISABLE MACROS
+#define ENABLE 1U
+#define DISABLE 0U
 
+//CLOCK MACROS
+#define DMA1EN (1U<<21)
+#define DMA2EN (1U<<22)
 //TRANSFER MODES
 #define PERIPH2MEM	0U
 #define MEM2PERIPH 1U
@@ -13,37 +20,42 @@
 #define RESERVED 3U
 
 //CHANNELS
-#define CHANNEL_0 0U
-#define CHANNEL_1 1U
-#define CHANNEL_2 2U
-#define CHANNEL_3 3U
-#define CHANNEL_4 4U
-#define CHANNEL_5 5U
-#define CHANNEL_6 6U
-#define CHANNEL_7 7U
+#define STREAM_CHANNEL_0 0U
+#define STREAM_CHANNEL_1 (1U<<25)
+#define STREAM_CHANNEL_2 (2U<<25)
+#define STREAM_CHANNEL_3 (3U<<25)
+#define STREAM_CHANNEL_4 (4U<<25)
+#define STREAM_CHANNEL_5 (5U<<25)
+#define STREAM_CHANNEL_6 (6U<<25)
+#define STREAM_CHANNEL_7 (7U<<25)
 
 //BURST TRANSFER CONFIG
-#define SINGLE_TRANSFER 0U
-#define INCR4 1U
-#define INCR8 2U
-#define INCR16 3U
+#define DMA_SINGLE_TRANSFER 0U
+#define DMA_INCR4 1U
+#define DMA_INCR8 2U
+#define DMA_INCR16 3U
 
 //TARGET MEMORY
-#define M0AR 0U
-#define M1AR 1U
+#define DMA_M0AR (0U<<19)
+#define DMA_M1AR (1U<<19)
 
 //PRIORITY LEVEL
-#define LOW 0U
-#define MEDIUM 1U
-#define HIGH 2U
-#define VERY_HIGH 3U
+#define DMA_LOW_PRIORITY 0U
+#define DMA_MEDIUM_PRIORITY 1U
+#define DMA_HIGH_PRIORITY 2U
+#define DMA_VERY_HIGH_PRIORITY 3U
 
+//DATA SIZE
+#define BYTE_SIZE 0U
+#define TWO_BYTE_SIZE 1U
+#define FOUR_BYTE_SIZE 2U
+#define RESERVED_SIZE 3U
 
 typedef struct{
-	uint8_t channel;
+	uint32_t channel;
 	uint8_t memory_burst;
 	uint8_t peripheral_burst;
-	uint8_t current_target;
+	uint32_t current_target;
 	uint8_t double_buffer_mode;
 	uint8_t priority;
 	uint8_t pincos;
@@ -70,8 +82,8 @@ typedef struct{
 }DMA_Handle_t;
 
 uint8_t dma_init(DMA_Handle_t* DMA_Handler);
-uint8_t dma_transmit(uint16_t len,uint32_t* mem0,uint32_t* mem1,uint32_t* periph_address);
-uint8_t get_fifo_status(void);
+uint8_t dma_transmit(DMA_Handle_t*DMA_Handler,uint16_t len,const void* periph_address,const void* mem0,const void* mem1);
+uint8_t get_fifo_status(DMA_Handle_t* DMA_Handler);
 
 
 
