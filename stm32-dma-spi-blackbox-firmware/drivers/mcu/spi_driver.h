@@ -63,6 +63,11 @@
 
 #define SPI_TXE (1U<<1)
 
+//Buffer Flags
+#define SPI_READY 1U
+#define SPI_BUSY 0U
+#define SPI_OK	2U
+
 typedef struct{
 	uint8_t DFF;
 	uint8_t NSS;
@@ -78,21 +83,21 @@ typedef struct{
 typedef struct{
 	SPI_TypeDef* pSPIx;
 	SPI_Config Config_Settings;
+	uint8_t TxLen;
+	uint8_t RxLen;
+	uint8_t* pTxBuffer;
+	uint8_t* pRxBuffer;
+	uint8_t TxState;
+	uint8_t RxState;
 }SPI_Handle_t;
 
-typedef struct{
-	volatile uint8_t ring_buffer[64];
-	volatile uint8_t head;
-	volatile uint8_t tail;
-}SPI_Circular_Buffer;
-
+void  SPI_PeriClockControl(SPI_TypeDef  *pSPIx,uint8_t state);
 void SPI_Init(SPI_Handle_t 	*SPI_Handler);
 void SPI_DeInit(SPI_TypeDef *pSPIx );
-void  SPI_PeriClockControl(SPI_TypeDef  *pSPIx,uint8_t state);
 void SPI_TX(SPI_TypeDef  *pSPIx,uint8_t  *pTxBuffer,uint32_t len);
 void SPI_RX(SPI_TypeDef  *pSPIx,uint8_t *pRxBuffer,uint32_t len);
 void SPI_IRQConfig(SPI_TypeDef *pSPIx,uint8_t IRQNumber,uint8_t PriorityNumber,uint8_t state);
 void SPI_IRQHandler(uint8_t PinNumber);
-uint8_t read_buffer(SPI_Circular_Buffer *pBuffer,uint8_t *data);
-uint8_t write_buffer(SPI_Circular_Buffer *pBuffer,uint8_t *data);
+//uint8_t read_buffer(Ring_buffer*pBuffer,uint8_t *data);
+//uint8_t write_buffer(SPI_Circular_Buffer *pBuffer,uint8_t *data);
 #endif /* SPI_DRIVER_H_ */
