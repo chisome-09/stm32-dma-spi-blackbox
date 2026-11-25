@@ -1,7 +1,13 @@
 #include "spi_driver.h"
 #include "dma.h"
 
-void  SPI_PeriClockControl(SPI_TypeDef  *pSPIx,uint8_t state){
+/**
+ * @brief  Enables the peripheral clock for the given SPI instance.
+ * @param  pSPIx: Base address of the SPI peripheral (SPI1..SPI5).
+ * @param  state: ENABLE or DISABLE. Currently unused; the clock is always enabled.
+ * @retval None. Returns without action if pSPIx is not a valid SPI instance.
+ */
+void SPI_PeriClockControl(SPI_TypeDef *pSPIx, uint8_t state){
 	if(pSPIx == SPI1){
 		RCC->APB2ENR |= (1U<<1);
 	}
@@ -83,10 +89,17 @@ void SPI_Init(SPI_Handle_t *SPI_Handler){
 	SPI_Handler->pSPIx->CR1 |= (1U << 6);
 }
 
-void SPI_TX(SPI_TypeDef  *pSPIx,uint8_t *pTxBuffer,uint32_t len){
+/**
+ * @brief  Blocking transmit. Waits for TXE before each write.
+ * @param  pSPIx:     Base address of the SPI peripheral.
+ * @param  pTxBuffer: Pointer to the data to send.
+ * @param  len:       Number of bytes to send (must be even in 16-bit frame mode).
+ * @retval None
+ */
+void SPI_TX(SPI_TypeDef *pSPIx, uint8_t *pTxBuffer, uint32_t len){
 	while(len>0){
 		while(!(pSPIx->SR & SPI_TXE)){};
-		if(pSPIx->CR1 & (1U<<7)){
+		if(pSPIx->CR1 & (1U<<11)){   // FIX: was (1U<<7), which is LSBFIRST; DFF is bit 11
 			pSPIx->DR = *(uint16_t*)pTxBuffer;
 			len-=2;
 			pTxBuffer+=2;
@@ -96,27 +109,40 @@ void SPI_TX(SPI_TypeDef  *pSPIx,uint8_t *pTxBuffer,uint32_t len){
 			len-=1;
 			pTxBuffer+=1;
 		}
-
-
 	}
 }
 
+/**
+ * @brief  Blocking receive. Waits for RXNE before each read.
+ * @param  pSPIx:     Base address of the SPI peripheral.
+ * @param  pRxBuffer: Pointer to the buffer that receives the data.
+ * @param  len:       Number of bytes to read (must be even in 16-bit frame mode).
+ * @retval None
+ */
 void SPI_RX(SPI_TypeDef* pSPIx,uint8_t *pRxBuffer,uint32_t len){
-		while(len>0){
-			while(!((pSPIx->SR)&(1U<<0))){};
-			if(pSPIx->CR1 & (1U<<11)){
-				*((uint16_t*)pRxBuffer)=pSPIx->DR ;
-				len-=2;
-				pRxBuffer+=2;
-			}
-			else{
-				*pRxBuffer=(uint8_t)pSPIx->DR ;
-				len-=1;
-				pRxBuffer+=1;
-			}
+	while(len>0){
+		while(!((pSPIx->SR)&(1U<<0))){};
+		if(pSPIx->CR1 & (1U<<11)){
+			*((uint16_t*)pRxBuffer)=pSPIx->DR ;
+			len-=2;
+			pRxBuffer+=2;
 		}
+		else{
+			*pRxBuffer=(uint8_t)pSPIx->DR ;
+			len-=1;
+			pRxBuffer+=1;
+		}
+	}
 }
 
+/**
+ * @brief  Enables or disables an SPI interrupt line in the NVIC.
+ * @param  pSPIx:          Unused.
+ * @param  IRQNumber:      IRQ number of the interrupt (cast to IRQn_Type).
+ * @param  PriorityNumber: NVIC priority. Applied only when state is ENABLE.
+ * @param  state:          ENABLE or DISABLE.
+ * @retval None
+ */
 void SPI_IRQConfig(SPI_TypeDef *pSPIx,uint8_t IRQNumber,uint8_t PriorityNumber,uint8_t state){
 	if(state == ENABLE){
 		NVIC_EnableIRQ((IRQn_Type) IRQNumber);
@@ -127,6 +153,13 @@ void SPI_IRQConfig(SPI_TypeDef *pSPIx,uint8_t IRQNumber,uint8_t PriorityNumber,u
 	}
 }
 
+/**
+ * @brief  Interrupt-driven receive step. Call from the SPI ISR.
+ *         Reads one frame if RXNE is set, and disables the RXNE interrupt
+ *         once RxLen reaches 0.
+ * @param  pSPIHandle: Pointer to the SPI handle holding pSPIx, pRxBuffer and RxLen.
+ * @retval None
+ */
 void SPI_RX_IT(SPI_Handle_t *pSPIHandle) {
     if (!(pSPIHandle->pSPIx->SR & (1U << 0))) {
         return;
@@ -142,11 +175,19 @@ void SPI_RX_IT(SPI_Handle_t *pSPIHandle) {
         pSPIHandle->pRxBuffer += 1;
     }
 
-
     if (pSPIHandle->RxLen == 0) {
         pSPIHandle->pSPIx->CR2 &= ~(1U << 6);
     }
 }
+
+/**
+ * @brief  Starts an interrupt-driven transmit by loading the handle and enabling TXEIE.
+ * @param  pSPIHandle: Pointer to the SPI handle.
+ * @param  tx_buffer:  Pointer to the data to send. Must stay valid until the transfer ends.
+ * @param  len:        Number of bytes to send (0..255).
+ * @retval SPI_OK   Transfer started.
+ * @retval SPI_BUSY A previous transmit is still in progress; nothing was changed.
+ */
 uint8_t SPI_TX_IT(SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
 	if(pSPIHandle->TxState == SPI_BUSY){
 		return SPI_BUSY;
@@ -158,6 +199,13 @@ uint8_t SPI_TX_IT(SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
 	return SPI_OK;
 }
 
+/**
+ * @brief  Interrupt-driven transmit step. Call from the SPI ISR.
+ *         Writes one frame if TXE is set. When TxLen reaches 0 it disables the
+ *         TXE interrupt and sets TxState to SPI_READY.
+ * @param  pSPIHandle: Pointer to the SPI handle holding pSPIx, pTxBuffer, TxLen and TxState.
+ * @retval None
+ */
 void SPI_TX_IT_ISR(SPI_Handle_t *pSPIHandle) {
     if (!(pSPIHandle->pSPIx->SR & (1U << 1))) {
         return;
@@ -177,8 +225,7 @@ void SPI_TX_IT_ISR(SPI_Handle_t *pSPIHandle) {
         pSPIHandle->TxState = SPI_READY;
     }
 }
-
-void SPI_TX_DMA(SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
+void SPI_TX_DMA(DMA_Handle_t* DMA_Handler,SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
 
 }
 

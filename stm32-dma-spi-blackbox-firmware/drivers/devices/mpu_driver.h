@@ -1,4 +1,3 @@
-
 #ifndef DEVICES_MPU_DRIVER_H_
 #define DEVICES_MPU_DRIVER_H_
 #include "log_packet.h"
@@ -26,175 +25,109 @@ typedef enum {
 } MPU_General_Reg;
 
 
-//MPU General Settings
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t dlpf_cfg :3;
-		uint8_t ext_sync_set : 3;
-		uint8_t fifo_mode : 1;
-		uint8_t reserved : 1;
-	}config_settings;
-}MPU_TypeDef;
+//CONFIG (0x1A)
+#define MPU_CONFIG_DLPF_CFG_Pos          0U
+#define MPU_CONFIG_DLPF_CFG_Msk          (7U << MPU_CONFIG_DLPF_CFG_Pos)
+#define MPU_CONFIG_EXT_SYNC_SET_Pos      3U
+#define MPU_CONFIG_EXT_SYNC_SET_Msk      (7U << MPU_CONFIG_EXT_SYNC_SET_Pos)
+#define MPU_CONFIG_FIFO_MODE_Msk         (1U << 6)
 
+//GYRO_CONFIG (0x1B)
+#define MPU_GYRO_FCHOICE_B_Pos           0U
+#define MPU_GYRO_FCHOICE_B_Msk           (3U << MPU_GYRO_FCHOICE_B_Pos)
+#define MPU_GYRO_FS_SEL_Pos              3U
+#define MPU_GYRO_FS_SEL_Msk              (3U << MPU_GYRO_FS_SEL_Pos)
+#define MPU_GYRO_ZG_ST_Msk               (1U << 5)
+#define MPU_GYRO_YG_ST_Msk               (1U << 6)
+#define MPU_GYRO_XG_ST_Msk               (1U << 7)
 
-//Gyroscope Settings
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t fchoice_b :2;
-		uint8_t reserved : 1;
-		uint8_t gyro_full_scale_sel : 2;
-		uint8_t z_gyro_test : 1;
-		uint8_t y_gyro_test : 1;
-		uint8_t x_gyro_test: 1;
-	}config_settings;
-}Gyro_TypeDef;
+//ACCEL_CONFIG (0x1C)
+#define MPU_ACCEL_FS_SEL_Pos             3U
+#define MPU_ACCEL_FS_SEL_Msk             (3U << MPU_ACCEL_FS_SEL_Pos)
+#define MPU_ACCEL_ZA_ST_Msk              (1U << 5)
+#define MPU_ACCEL_YA_ST_Msk              (1U << 6)
+#define MPU_ACCEL_XA_ST_Msk              (1U << 7)
 
-//Accelerometer Settings
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t reserved :3;
-		uint8_t accel_full_scale_sel : 2;
-		uint8_t z_accel_test : 1;
-		uint8_t y_accel_test : 1;
-		uint8_t x_accel_test: 1;
-	}config_settings;
-}Accel_1_TypeDef;
+//ACCEL_CONFIG2 (0x1D)
+#define MPU_ACCEL2_A_DLPF_CFG_Pos        0U
+#define MPU_ACCEL2_A_DLPF_CFG_Msk        (7U << MPU_ACCEL2_A_DLPF_CFG_Pos)
+#define MPU_ACCEL2_FCHOICE_B_Msk         (1U << 3)
 
-//Accelerometer Additional Settings
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t a_dlpf_cfg : 3;
-		uint8_t accel_fchoice_b : 1;
-		uint8_t reserved : 4;
-	}config_settings;
-}Accel_2_TypeDef;
-
-//Low Power Accelerometer ODR Control
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t lposc_clksel : 4;
-		uint8_t reserved : 4;
-	}config_settings;
-}Low_Power_Accel;
+//LP_ACCEL_ODR (0x1E)
+#define MPU_LP_ODR_LPOSC_CLKSEL_Pos      0U
+#define MPU_LP_ODR_LPOSC_CLKSEL_Msk      (15U << MPU_LP_ODR_LPOSC_CLKSEL_Pos)
 
 //Wake On Motion Threshold
 extern uint8_t wom_threshold;
 
-//FIFO Enable
-typedef union {
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t slv_0 : 1;
-		uint8_t slv_1: 1;
-		uint8_t slv_2: 1;
-		uint8_t accel: 1;
-		uint8_t gyro_zout: 1;
-		uint8_t gyro_yout: 1;
-		uint8_t gyro_xout: 1;
-		uint8_t temp_out: 1;
-	}config_settings;
-}FIFO_ENABLE;
+//FIFO_EN (0x23)
+#define MPU_FIFO_SLV0_Msk                (1U << 0)
+#define MPU_FIFO_SLV1_Msk                (1U << 1)
+#define MPU_FIFO_SLV2_Msk                (1U << 2)
+#define MPU_FIFO_ACCEL_Msk               (1U << 3)
+#define MPU_FIFO_GYRO_ZOUT_Msk           (1U << 4)
+#define MPU_FIFO_GYRO_YOUT_Msk           (1U << 5)
+#define MPU_FIFO_GYRO_XOUT_Msk           (1U << 6)
+#define MPU_FIFO_TEMP_OUT_Msk            (1U << 7)
 
-//User Control
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t sig_cond_rst : 1;
-		uint8_t i2c_mst_rst : 1;
-		uint8_t fifo_rst: 1;
-		uint8_t dmp_rst: 1;
-		uint8_t i2c_if_dis: 1;
-		uint8_t i2c_mst_en:1;
-		uint8_t fifo_en: 1;
-		uint8_t dmp_en: 1;
-	}config_settings;
-}USER_CTRL;
+//USER_CTRL (0x6A)
+#define MPU_UCTRL_SIG_COND_RST_Msk       (1U << 0)
+#define MPU_UCTRL_I2C_MST_RST_Msk        (1U << 1)
+#define MPU_UCTRL_FIFO_RST_Msk           (1U << 2)
+#define MPU_UCTRL_DMP_RST_Msk            (1U << 3)
+#define MPU_UCTRL_I2C_IF_DIS_Msk         (1U << 4)
+#define MPU_UCTRL_I2C_MST_EN_Msk         (1U << 5)
+#define MPU_UCTRL_FIFO_EN_Msk            (1U << 6)
+#define MPU_UCTRL_DMP_EN_Msk             (1U << 7)
 
-//Accelerometer Interrupt Control
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t reserved : 6;
-		uint8_t accel_intel_mode:1 ;
-		uint8_t accel_intel_en:1;
-	}config_settings;
-}ACCEL_INT_CTRL;
+//ACCEL_INTEL_CTRL (0x69)
+#define MPU_AINT_INTEL_MODE_Msk          (1U << 6)
+#define MPU_AINT_INTEL_EN_Msk            (1U << 7)
 
-//Power Management 1 Settings
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t clksel : 3;
-		uint8_t tempdis: 1;
-		uint8_t gyro_standby:1;
-		uint8_t cycle: 1;
-		uint8_t sleep:1;
-		uint8_t device_reset: 1;
-	}config_settings;
-}PWR_MGMT_1;
+//PWR_MGMT_1 (0x6B)
+#define MPU_PWR1_CLKSEL_Pos              0U
+#define MPU_PWR1_CLKSEL_Msk              (7U << MPU_PWR1_CLKSEL_Pos)
+#define MPU_PWR1_TEMP_DIS_Msk            (1U << 3)
+#define MPU_PWR1_GYRO_STANDBY_Msk        (1U << 4)
+#define MPU_PWR1_CYCLE_Msk               (1U << 5)
+#define MPU_PWR1_SLEEP_Msk               (1U << 6)
+#define MPU_PWR1_DEVICE_RESET_Msk        (1U << 7)
 
-//Power Management 2 Settings
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t disable_zg:1;
-		uint8_t disable_yg: 1;
-		uint8_t disable_xg: 1;
-		uint8_t disable_za: 1;
-		uint8_t disable_ya:1;
-		uint8_t disable_xa:1;
-		uint8_t lp_wake_ctrl:2;
-	}config_settings;
-}PWR_MGMT_2;
+//PWR_MGMT_2 (0x6C)
+#define MPU_PWR2_DISABLE_ZG_Msk          (1U << 0)
+#define MPU_PWR2_DISABLE_YG_Msk          (1U << 1)
+#define MPU_PWR2_DISABLE_XG_Msk          (1U << 2)
+#define MPU_PWR2_DISABLE_ZA_Msk          (1U << 3)
+#define MPU_PWR2_DISABLE_YA_Msk          (1U << 4)
+#define MPU_PWR2_DISABLE_XA_Msk          (1U << 5)
+#define MPU_PWR2_LP_WAKE_CTRL_Pos        6U
+#define MPU_PWR2_LP_WAKE_CTRL_Msk        (3U << MPU_PWR2_LP_WAKE_CTRL_Pos)
 
-//Interrupt Pin Configuration
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t reserved:1;
-		uint8_t bypass_en: 1;
-		uint8_t fsync_int_mode_en: 1;
-		uint8_t actl_fsync: 1;
-		uint8_t int_anyrd_2clear:1;
-		uint8_t latch_int_en:1;
-		uint8_t open:1;
-		uint8_t actl:1;
-	}config_settings;
-}INT_PIN_Typedef;
+//INT_PIN_CFG (0x37)
+#define MPU_INTPIN_BYPASS_EN_Msk         (1U << 1)
+#define MPU_INTPIN_FSYNC_INT_MODE_Msk    (1U << 2)
+#define MPU_INTPIN_ACTL_FSYNC_Msk        (1U << 3)
+#define MPU_INTPIN_INT_ANYRD_2CLEAR_Msk  (1U << 4)
+#define MPU_INTPIN_LATCH_INT_EN_Msk      (1U << 5)
+#define MPU_INTPIN_OPEN_Msk              (1U << 6)
+#define MPU_INTPIN_ACTL_Msk              (1U << 7)
 
-//Interrupt Enable
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t raw_rdy_en:1;
-		uint8_t reserved: 2;
-		uint8_t fsync_int_en: 1;
-		uint8_t fifo_overflow_en: 1;
-		uint8_t reserved_2:1;
-		uint8_t wom_en:1;
-		uint8_t reserved_3:1;
-	}config_settings;
-}INT_EN_TypeDef;
+//INT_ENABLE (0x38)
+#define MPU_INTEN_RAW_RDY_Msk            (1U << 0)
+#define MPU_INTEN_FSYNC_INT_Msk          (1U << 3)
+#define MPU_INTEN_FIFO_OVERFLOW_Msk      (1U << 4)
+#define MPU_INTEN_WOM_Msk                (1U << 6)
 
-//Interrupt Status
-typedef union{
-	uint8_t config;
-	struct __attribute__((packed)){
-		uint8_t raw_data_rdy_int:1;
-		uint8_t dmp_int:1;
-		uint8_t reserved:1;
-		uint8_t fsync_int:1;
-		uint8_t fifo_overflow_int:1;
-		uint8_t reserved_2:1;
-		uint8_t wom_int:1;
-		uint8_t reserved_3:1;
-	}config_settings;
-}INT_STATUS_TypeDef;
+//INT_STATUS (0x3A)
+#define MPU_INTST_RAW_DATA_RDY_Msk       (1U << 0)
+#define MPU_INTST_DMP_INT_Msk            (1U << 1)
+#define MPU_INTST_FSYNC_INT_Msk          (1U << 3)
+#define MPU_INTST_FIFO_OVERFLOW_Msk      (1U << 4)
+#define MPU_INTST_WOM_INT_Msk            (1U << 6)
+
+//Helpers for multi-bit fields
+#define MPU_SET_FIELD(val, name)   (((uint8_t)(val) << name##_Pos) & name##_Msk)
+#define MPU_GET_FIELD(reg, name)   (((reg) & name##_Msk) >> name##_Pos)
 
 
 //Driver Functions

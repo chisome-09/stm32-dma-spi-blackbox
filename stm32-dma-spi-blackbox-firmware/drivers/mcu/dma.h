@@ -87,6 +87,7 @@ typedef struct{
 	uint8_t fifo_err_int;
 	uint8_t direct_mode;
 	uint8_t fifo_thres;
+	uint8_t stream_number;
 }DMA_Stream_Config;
 
 typedef struct{

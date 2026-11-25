@@ -1,11 +1,24 @@
 #include "dma.h"
 
+/**
+ * @brief  Returns the stream number (0..7) of this handle.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval Stream number taken from DMA_Config.stream_number.
+ */
 static uint32_t dma_stream_index(DMA_Handle_t* DMA_Handler) {
-    return (((uint32_t)DMA_Handler->DMA_Stream & 0x3FFU) - 0x10U) / 0x18U;
+    return DMA_Handler->DMA_Config.stream_number;
 }
 
 
 
+/**
+ * @brief  Clears the selected status flags of this handle's stream by writing
+ *         LIFCR (streams 0-3) or HIFCR (streams 4-7).
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @param  flags:       Bit mask of flags to clear, in stream-relative position
+ *                      (FE, DME, TE, HT, TC). Bits outside 0x3D are ignored.
+ * @retval None
+ */
 static void dma_clear_mask(DMA_Handle_t* DMA_Handler, uint8_t flags) {
     static const uint8_t shift[4] = {0, 6, 16, 22};
     uint32_t n    = dma_stream_index(DMA_Handler);
@@ -21,6 +34,11 @@ static void dma_clear_mask(DMA_Handle_t* DMA_Handler, uint8_t flags) {
 
 
 
+/**
+ * @brief  Clears all status flags (FE, DME, TE, HT, TC) of this handle's stream.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval 1 (always).
+ */
 uint8_t dma_clear_flags(DMA_Handle_t* DMA_Handler) {
     dma_clear_mask(DMA_Handler, 0x3DU);
     return 1;
@@ -29,6 +47,12 @@ uint8_t dma_clear_flags(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Reads the hardware status flags of this handle's stream from
+ *         LISR (streams 0-3) or HISR (streams 4-7).
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval Stream-relative flag mask (DMA_FLAG_FE, DME, TE, HT, TC). 0 if none are set.
+ */
 uint8_t dma_get_flags(DMA_Handle_t* DMA_Handler) {
     static const uint8_t shift[4] = {0, 6, 16, 22};
     uint32_t n   = dma_stream_index(DMA_Handler);
@@ -40,6 +64,11 @@ uint8_t dma_get_flags(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Reads the FIFO status field (FS[2:0]) of the stream.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval FIFO level code, 0..7 (see RM0383, DMA_SxFCR FS bits).
+ */
 uint8_t get_fifo_status(DMA_Handle_t* DMA_Handler) {
     return (uint8_t)((DMA_Handler->DMA_Stream->FCR >> 3) & 7U);
 }
@@ -47,6 +76,17 @@ uint8_t get_fifo_status(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Enables the DMA controller clock, disables the stream, clears flags and
+ *         handle state, and writes the CR/FCR configuration from DMA_Config.
+ *         Does not start a transfer.
+ * @param  DMA_Handler: Pointer to the DMA handle. DMA_Periph must be DMA1 or DMA2,
+ *                      DMA_Stream must be non-NULL, and DMA_Config must be filled in.
+ *                      Note: channel and current_target must be pre-shifted
+ *                      (channel << 25, current_target << 19); all other fields are unshifted.
+ * @retval 1  Success.
+ * @retval 0  DMA_Handler or DMA_Stream is NULL, or DMA_Periph is neither DMA1 nor DMA2.
+ */
 uint8_t dma_init(DMA_Handle_t* DMA_Handler) {
     if (DMA_Handler == NULL || DMA_Handler->DMA_Stream == NULL) {
         return 0;
@@ -145,6 +185,19 @@ uint8_t dma_init(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Starts a DMA transfer: marks the handle busy, loads PAR/M0AR(/M1AR)/NDTR
+ *         and sets EN. In polled mode (transfer_int == 0) stale flags are cleared first.
+ * @param  DMA_Handler:    Pointer to an initialized DMA handle.
+ * @param  len:            Number of data items to transfer (NDTR). Must be non-zero.
+ * @param  periph_address: Peripheral data register address.
+ * @param  mem0:           Memory buffer 0 address.
+ * @param  mem1:           Memory buffer 1 address. Required (non-NULL) in double-buffer
+ *                         mode, ignored otherwise.
+ * @retval DMA_OK         Transfer started.
+ * @retval DMA_ERR_PARAM  NULL handle or stream, len == 0, or double-buffer mode with mem1 == NULL.
+ * @retval DMA_ERR_BUSY   Handle is busy or the stream's EN bit is still set; no register was changed.
+ */
 uint8_t dma_transmit(DMA_Handle_t*DMA_Handler,uint16_t len,const void* periph_address,const void* mem0,const void* mem1){
 	 if (DMA_Handler == NULL || DMA_Handler->DMA_Stream == NULL || len == 0) {
 	        return DMA_ERR_PARAM;
@@ -190,6 +243,12 @@ uint8_t dma_transmit(DMA_Handle_t*DMA_Handler,uint16_t len,const void* periph_ad
 
 
 
+/**
+ * @brief  Stops the stream (waits until EN reads 0), clears all flags and
+ *         sets the handle to idle.
+ * @param  DMA_Handler: Pointer to the DMA handle (must be non-NULL).
+ * @retval 1 (always).
+ */
 uint8_t dma_abort(DMA_Handle_t* DMA_Handler) {
     DMA_Handler->DMA_Stream->CR &= ~(1U << 0);
     while (DMA_Handler->DMA_Stream->CR & (1U << 0)) {}
@@ -202,6 +261,12 @@ uint8_t dma_abort(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Reports whether a transfer is in progress.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval 1  busy_flag is DMA_BUSY.
+ * @retval 0  Idle.
+ */
 uint8_t dma_is_busy(DMA_Handle_t* DMA_Handler) {
     return (DMA_Handler->busy_flag == DMA_BUSY);
 }
@@ -209,6 +274,15 @@ uint8_t dma_is_busy(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Polls the hardware flags (for use without interrupts) and updates the handle.
+ *         Error: records error_code and aborts the stream.
+ *         Circular/double-buffer: latches HT/TC into event and clears the flags.
+ *         One-shot: on TC clears flags and sets the handle idle.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval 1  Something happened (error, HT/TC event, or one-shot transfer complete).
+ * @retval 0  Nothing to report yet.
+ */
 uint8_t dma_poll_done(DMA_Handle_t* DMA_Handler) {
     uint8_t flags = dma_get_flags(DMA_Handler);
 
@@ -240,6 +314,16 @@ uint8_t dma_poll_done(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Interrupt handler body. Call from the stream's IRQ handler.
+ *         TE/DME: records error_code and aborts the stream.
+ *         Otherwise: clears the flags, latches FE into error_code, latches HT/TC into
+ *         event (incrementing overrun if the previous event was not consumed in
+ *         circular/double-buffer mode), and sets the handle idle when a one-shot
+ *         transfer completes.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval Flags that were active (DMA_FLAG_* mask), or 0 if the interrupt was not for this stream.
+ */
 uint8_t dma_irq_handler(DMA_Handle_t* DMA_Handler) {
     uint8_t flags = dma_get_flags(DMA_Handler);
 
@@ -287,6 +371,11 @@ uint8_t dma_irq_handler(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Returns and clears the latched error flags.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @retval Error mask (DMA_FLAG_TE, DME, FE), or 0 if no error has occurred.
+ */
 uint8_t dma_take_error(DMA_Handle_t* DMA_Handler) {
     uint8_t e = DMA_Handler->error_code;
     DMA_Handler->error_code = 0;
@@ -296,6 +385,13 @@ uint8_t dma_take_error(DMA_Handle_t* DMA_Handler) {
 
 
 
+/**
+ * @brief  Atomically returns and clears the selected latched events.
+ *         Interrupts are disabled during the read-modify-write so the ISR cannot lose an update.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @param  mask:        Events to consume (DMA_FLAG_HT and/or DMA_FLAG_TC).
+ * @retval The subset of mask that was pending (0 if none).
+ */
 uint8_t dma_take_event(DMA_Handle_t* DMA_Handler, uint8_t mask) {
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
@@ -307,6 +403,12 @@ uint8_t dma_take_event(DMA_Handle_t* DMA_Handler, uint8_t mask) {
 
 
 
+/**
+ * @brief  Checks pending events without clearing them.
+ * @param  DMA_Handler: Pointer to the DMA handle.
+ * @param  mask:        Events to look at (DMA_FLAG_HT and/or DMA_FLAG_TC).
+ * @retval The subset of mask that is pending (0 if none).
+ */
 uint8_t dma_peek_event(DMA_Handle_t* DMA_Handler, uint8_t mask) {
     return (DMA_Handler->event & mask);
 }
