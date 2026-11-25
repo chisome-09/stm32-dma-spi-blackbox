@@ -51,6 +51,20 @@
 #define FOUR_BYTE_SIZE 2U
 #define RESERVED_SIZE 3U
 
+//BUSY FLAG
+#define DMA_IDLE        0
+#define DMA_BUSY        1
+
+#define DMA_OK          0
+#define DMA_ERR_PARAM   1
+#define DMA_ERR_BUSY    2
+
+#define DMA_FLAG_FE     0x01U
+#define DMA_FLAG_DME    0x04U
+#define DMA_FLAG_TE     0x08U
+#define DMA_FLAG_HT     0x10U
+#define DMA_FLAG_TC     0x20U
+
 typedef struct{
 	uint32_t channel;
 	uint8_t memory_burst;
@@ -79,12 +93,23 @@ typedef struct{
 	DMA_TypeDef* DMA_Periph;
 	DMA_Stream_TypeDef* DMA_Stream;
 	DMA_Stream_Config DMA_Config;
+	volatile uint8_t busy_flag;
+	volatile uint8_t error_code;
+	volatile uint8_t event;
+	volatile uint16_t overrun;
 }DMA_Handle_t;
 
 uint8_t dma_init(DMA_Handle_t* DMA_Handler);
 uint8_t dma_transmit(DMA_Handle_t*DMA_Handler,uint16_t len,const void* periph_address,const void* mem0,const void* mem1);
 uint8_t get_fifo_status(DMA_Handle_t* DMA_Handler);
-
-
+uint8_t dma_irq_handler(DMA_Handle_t* DMA_Handler);
+uint8_t dma_clear_flags(DMA_Handle_t* DMA_Handler);
+uint8_t dma_abort(DMA_Handle_t* DMA_Handler);
+uint8_t dma_get_flags(DMA_Handle_t* DMA_Handler);
+uint8_t dma_is_busy(DMA_Handle_t* DMA_Handler);
+uint8_t dma_poll_done(DMA_Handle_t* DMA_Handler);
+uint8_t dma_take_error(DMA_Handle_t* DMA_Handler);
+uint8_t dma_take_event(DMA_Handle_t* DMA_Handler, uint8_t mask);
+uint8_t dma_peek_event(DMA_Handle_t* DMA_Handler, uint8_t mask);
 
 #endif /* MCU_DMA_H_ */
