@@ -93,7 +93,7 @@ stm32-dma-spi-blackbox/
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/<your-username>/stm32-dma-spi-blackbox.git
+   git clone https://github.com/chisome-09/stm32-dma-spi-blackbox.git
    ```
 
 2. Open **STM32CubeIDE** and import `stm32-dma-spi-blackbox-firmware` via **File → Open Projects from File System...**
