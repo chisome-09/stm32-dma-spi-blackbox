@@ -1,7 +1,7 @@
 #ifndef DEVICES_MPU_DRIVER_H_
 #define DEVICES_MPU_DRIVER_H_
 #include "log_packet.h"
-
+#include "spi_driver.h"
 
 //MPU Settings Register Map
 typedef enum {
@@ -57,8 +57,6 @@ typedef enum {
 #define MPU_LP_ODR_LPOSC_CLKSEL_Pos      0U
 #define MPU_LP_ODR_LPOSC_CLKSEL_Msk      (15U << MPU_LP_ODR_LPOSC_CLKSEL_Pos)
 
-//Wake On Motion Threshold
-extern uint8_t wom_threshold;
 
 //FIFO_EN (0x23)
 #define MPU_FIFO_SLV0_Msk                (1U << 0)
@@ -124,6 +122,39 @@ extern uint8_t wom_threshold;
 #define MPU_INTST_FSYNC_INT_Msk          (1U << 3)
 #define MPU_INTST_FIFO_OVERFLOW_Msk      (1U << 4)
 #define MPU_INTST_WOM_INT_Msk            (1U << 6)
+
+//Config Structure
+typedef struct {
+	uint8_t dlpf_cfg;
+	uint8_t ext_sync_set;
+	uint8_t fifo_mode;
+
+	uint8_t gyro_fchoice_b;
+	uint8_t gyro_fs_sel;
+
+	uint8_t accel_fs_sel;
+
+	uint8_t accel_dlpf_cfg;
+	uint8_t accel_fchoice_b;
+
+	uint8_t lposc_clksel;
+	uint8_t wom_threshold;
+	uint8_t smplrt_div;
+
+	uint8_t fifo_en;
+	uint8_t user_ctrl;
+	uint8_t accel_int_ctrl;
+	uint8_t int_pin_cfg;
+	uint8_t int_enable;
+
+	uint8_t clksel;
+	uint8_t pwr1_flags;
+
+	uint8_t lp_wake_ctrl;
+	uint8_t pwr2_flags;
+} MPU_Config_t;
+
+#define MPU_CONFIG_DEFAULT { .clksel = 1 }
 
 //Helpers for multi-bit fields
 #define MPU_SET_FIELD(val, name)   (((uint8_t)(val) << name##_Pos) & name##_Msk)

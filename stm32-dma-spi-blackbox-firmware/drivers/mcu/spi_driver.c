@@ -225,7 +225,39 @@ void SPI_TX_IT_ISR(SPI_Handle_t *pSPIHandle) {
         pSPIHandle->TxState = SPI_READY;
     }
 }
-void SPI_TX_DMA(DMA_Handle_t* DMA_Handler,SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
 
+void SPI_TX_DMA(DMA_Handle_t* DMA_Handler,SPI_Handle_t* pSPIHandle,uint8_t* tx_buffer,uint8_t len){
+	if(pSPIHandle->TxState == SPI_BUSY){
+		return SPI_BUSY;
+	}
+	pSPIHandle->pTxBuffer = tx_buffer;
+	pSPIHandle->TxState = SPI_BUSY;
+	pSPIHandle->TxLen = len;
+	uint16_t items = (pSPIHandle->pSPIx->CR1 & (1U << 11)) ? (len / 2) : len;
+	if(dma_transmit(DMA_Handler,pSPIHandle->TxLen,pSPIHandle->pSPIx->DR,pSPIHandle->TxBuffer,NULL) != DMA_OK){
+		pSPIx->TxState = SPI_READY;
+		return SPI_BUSY;
+	}
+	return SPI_OK;
 }
+
+void SPI_TX_DMA_ISR(DMA_Handle_t* DMA_Handler, SPI_Handle_t* pSPIHandle){
+	uint8_t flags = dma_irq_handler(DMA_Handler);
+	if(!flags){
+		return;
+	}
+
+	if(flags & (DMA_FLAG_TE | DMA_FLAG_DME)){
+		pSPIHandle->pSPIx->CR2 &= ~(1U << 1);
+		pSPIHandle->TxLen = 0;
+		pSPIHandle->TxState = SPI_READY;
+		return;
+	}
+
+	if(flags & DMA_FLAG_TC){
+		pSPIHandle->pSPIx->CR2 &= ~(1U << 1);
+		pSPIHandle->TxLen = 0;
+	}
+}
+
 
