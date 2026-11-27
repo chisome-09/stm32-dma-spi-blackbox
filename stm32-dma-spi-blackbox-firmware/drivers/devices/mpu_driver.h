@@ -163,9 +163,11 @@ typedef struct {
 
 //Driver Functions
 uint16_t compute_DC_bias(void);//Gyroscope Offset Registers
-uint8_t mpu_config(void);
+uint8_t mpu_write_reg(SPI_Handle_t* pSPIHandle, DMA_Handle_t* pDMA_TX,)
+uint8_t mpu_config(MPU_Config_t* config);
 uint8_t mpu_wom_mode(void);
-uint8_t mpu_read(IMU_Sample_t* imu_sample);
+uint8_t mpu_read_data(SPI_Handle_t* pSPIHandle, DMA_Handle_t* pDMA_TX, DMA_Handle_t* pDMA_RX, ring_buffer* buffer);
 uint8_t mpu_signal_reset(void);
 uint8_t mpu_reset(void);
+uint8_t mpu_who_am_i(SPI_Handle_t* pSPIHandle, DMA_Handle_t* pDMA_TX, DMA_Handle_t* pDMA_RX);
 #endif /* DEVICES_MPU_DRIVER_H_ */

@@ -40,3 +40,24 @@ uint8_t write_imu_buffer(imu_buffer* buffer,const IMU_Sample_t* imu_sample){
 		return 1;
 }
 
+uint8_t write_buffer(ring_buffer* buffer, uint8_t* value) {
+    uint16_t next_head = (buffer->head + 1) & 63;
+
+    if (next_head == buffer->tail) {
+        return 0; // Buffer is full
+    }
+
+    buffer->data[buffer->head] = *value;
+    buffer->head = next_head;
+    return 1;
+}
+
+uint8_t read_buffer(ring_buffer* buffer, uint8_t* value) {
+    if (buffer->head == buffer->tail) {
+        return 0; // Buffer is empty
+    }
+
+    *value = buffer->data[buffer->tail];
+    buffer->tail = (buffer->tail + 1) & 64;
+    return 1;
+}

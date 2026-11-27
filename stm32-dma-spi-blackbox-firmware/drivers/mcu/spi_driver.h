@@ -67,6 +67,7 @@
 #define SPI_READY 1U
 #define SPI_BUSY 0U
 #define SPI_OK	2U
+#define SPI_ERR 3U
 
 typedef struct{
 	uint8_t DFF;
@@ -87,6 +88,7 @@ typedef struct{
 	uint8_t RxLen;
 	uint8_t* pTxBuffer;
 	uint8_t* pRxBuffer;
+	uint8_t* pRxBuffer_1;
 	uint8_t TxState;
 	uint8_t RxState;
 }SPI_Handle_t;
